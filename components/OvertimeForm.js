@@ -25,9 +25,12 @@ function OvertimeForm() {
 
   React.useEffect(() => {
     const now = new Date();
-    const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-    setStartTime(formatDateTime(twoHoursAgo));
-    setEndTime(formatDateTime(now));
+    // Hora actual de Ecuador (UTC-5)
+    const ecuadorTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+    // Hora de inicio: dos horas antes de la hora de Ecuador
+    const startTimeEcuador = new Date(now.getTime() - (7 * 60 * 60 * 1000));
+    setStartTime(formatDateTime(startTimeEcuador));
+    setEndTime(formatDateTime(ecuadorTime));
   }, []);
 
   const formatDateTime = (date) => {
@@ -56,9 +59,10 @@ function OvertimeForm() {
       setSelectedName('');
       setWorkDescription('');
       const now = new Date();
-      const twoHoursAgo = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-      setStartTime(formatDateTime(twoHoursAgo));
-      setEndTime(formatDateTime(now));
+      const ecuadorTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+      const startTimeEcuador = new Date(now.getTime() - (7 * 60 * 60 * 1000));
+      setStartTime(formatDateTime(startTimeEcuador));
+      setEndTime(formatDateTime(ecuadorTime));
     }
   };
 
@@ -73,10 +77,20 @@ function OvertimeForm() {
       return;
     }
 
+    const formatDate = (dateString) => {
+      const d = new Date(dateString);
+      // Hora de Ecuador (UTC-5)
+      const ecuadorTime = new Date(d.getTime() - (5 * 60 * 60 * 1000));
+      return `${ecuadorTime.getDate()}/${ecuadorTime.getMonth() + 1}/${ecuadorTime.getFullYear()} ${
+        ecuadorTime.getHours().toString().padStart(2, '0')}:${
+        ecuadorTime.getMinutes().toString().padStart(2, '0')}:${
+        ecuadorTime.getSeconds().toString().padStart(2, '0')}`;
+    };
+
     const rows = data.map(row => ({
       NOMBRE: row.name,
-      INICIO: new Date(row.start_time).toLocaleString(),
-      FIN: new Date(row.end_time).toLocaleString(),
+      INICIO: formatDate(row.start_time),
+      FIN: formatDate(row.end_time),
       TRABAJO: row.work_description || "",
     }));
 
@@ -87,7 +101,7 @@ function OvertimeForm() {
   };
 
   const handleDeleteAll = async () => {
-    const code = prompt("Para borrar todos los datos, ingresa el código 23:");
+    const code = prompt("Para borrar todos los datos, ingresa el código:");
     if (code !== "23") {
       alert("Código incorrecto. No se borró nada.");
       return;
