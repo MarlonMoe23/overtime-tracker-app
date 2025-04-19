@@ -9,19 +9,18 @@ function OvertimeForm() {
   const [workDescription, setWorkDescription] = React.useState("");
 
   const technicians = [
-    "Alex Haro",
-    "Carlos Cisneros",
-    "César Sánchez",
-    "Dario Ojeda",
-    "José Urquizo",
-    "Kevin Vargas",
-    "Marlon Ortiz",
-    "Roberto Córdova",
-    "N1",
-    "N2",
-    "N3",
-    "N4",
-  ];
+    
+"Roberto Córdova",
+"Carlos Cisneros",
+"Miguel Lozada",
+"César Sánchez",
+"N1",
+"Alex Haro",
+"Dario Ojeda",
+"José Urquizo",
+"Kevin Vargas",
+"N2",
+     ];
 
   React.useEffect(() => {
     const now = new Date();
