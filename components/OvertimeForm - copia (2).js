@@ -23,12 +23,12 @@ const technicians = [
   "Carlos Cisneros",
   "Miguel Lozada",
   "César Sánchez",
-  "Juan Carrión",
+  "N1",
   "Alex Haro",
   "Dario Ojeda",
   "José Urquizo",
   "Kevin Vargas",
-  "Israel Pérez",
+  "N2",
 ];
 
 function formatDateTime(date) {
@@ -61,9 +61,8 @@ export default function OvertimeForm() {
   const [totalHours, setTotalHours] = useState("00:00");
   const [loading, setLoading] = useState(false);
 
-  // Ref para scroll automático al registro y al input de inicio
+  // Ref para scroll automático
   const listRef = useRef(null);
-  const startInputRef = useRef(null);
 
   // Inicializa fechas
   useEffect(() => {
@@ -151,6 +150,7 @@ export default function OvertimeForm() {
         setEditingId(null);
         await fetchRecords(selectedName);
         resetForm();
+        // Scroll al registro editado (el más reciente)
         setTimeout(() => {
           if (listRef.current) {
             listRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -173,6 +173,7 @@ export default function OvertimeForm() {
         showToast('¡Registro guardado exitosamente!');
         await fetchRecords(selectedName);
         resetForm();
+        // Scroll al registro recién ingresado (el más reciente)
         setTimeout(() => {
           if (listRef.current) {
             listRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -188,15 +189,9 @@ export default function OvertimeForm() {
     setStartTime(formatDateTime(new Date(record.start_time)));
     setEndTime(formatDateTime(new Date(record.end_time)));
     setWorkDescription(record.work_description || "");
-    setTimeout(() => {
-      if (startInputRef.current) {
-        startInputRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-        startInputRef.current.focus();
-      }
-    }, 200);
   }
 
-  // Exportar a Excel (toda la base de datos, ordenada por nombre y fecha de inicio)
+  // Exportar a Excel (toda la base de datos)
   async function handleExportAll() {
     const { data, error } = await supabase.from('overtime_records').select('*');
     if (error) {
@@ -207,14 +202,7 @@ export default function OvertimeForm() {
       showToast('No hay datos para exportar.');
       return;
     }
-    // Ordenar por nombre y luego por fecha de inicio (ascendente)
-    const sortedData = [...data].sort((a, b) => {
-      if (a.name < b.name) return -1;
-      if (a.name > b.name) return 1;
-      return new Date(a.start_time) - new Date(b.start_time);
-    });
-
-    const exportData = sortedData.map((entry) => ({
+    const exportData = data.map((entry) => ({
       'Técnico': entry.name,
       'Inicio': formatDate(entry.start_time),
       'Fin': formatDate(entry.end_time),
@@ -265,14 +253,14 @@ export default function OvertimeForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 py-6 flex flex-col justify-center sm:py-12">
+    <div className="min-h-screen bg-gray-100 py-6 flex flex-col justify-center sm:py-12">
       <Toast message={toast} onClose={() => setToast("")} />
       <div className="relative py-3 sm:max-w-xl sm:mx-auto">
-        <div className="relative px-4 py-10 bg-white shadow-xl sm:rounded-3xl sm:p-20">
+        <div className="relative px-4 py-10 bg-white shadow-lg sm:rounded-3xl sm:p-20">
           <div className="max-w-md mx-auto">
             <div className="divide-y divide-gray-200">
               <div className="py-8 text-base leading-6 space-y-4 text-gray-700 sm:text-lg sm:leading-7">
-                <h1 className="text-3xl font-extrabold mb-8 text-center text-blue-800 bg-blue-50 py-2 rounded shadow">
+                <h1 className="text-2xl font-bold mb-8 text-center">
                   Registro de Horas Extras
                 </h1>
 
@@ -299,7 +287,6 @@ export default function OvertimeForm() {
                     Hora de Inicio
                   </label>
                   <input
-                    ref={startInputRef}
                     type="datetime-local"
                     className="shadow border rounded w-full py-2 px-3 text-gray-700"
                     value={startTime}
@@ -321,7 +308,7 @@ export default function OvertimeForm() {
 
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
-                    Descripción del Trabajo
+                    Descripción del Trabajo (Opcional)
                   </label>
                   <textarea
                     className="shadow border rounded w-full py-2 px-3 text-gray-700"
@@ -333,7 +320,7 @@ export default function OvertimeForm() {
 
                 <div className="mt-8 space-y-4">
                   <button
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded w-full shadow transition"
+                    className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded w-full"
                     onClick={handleSave}
                   >
                     {editingId ? "Actualizar Registro" : "Guardar Registro"}
@@ -344,42 +331,41 @@ export default function OvertimeForm() {
 
             {/* Mostrar registros solo si hay técnico seleccionado */}
             {selectedName && (
-              <div className="mt-10">
-                <h2 className="text-xl font-bold mb-2 text-center text-blue-800 bg-blue-50 py-2 rounded">Registros de {selectedName}</h2>
-                <p className="mb-4 text-center text-gray-700">
-                  <span className="font-semibold">Total Horas Trabajadas:</span> <span className="font-bold text-blue-700">{totalHours}</span>
+              <div className="mt-8">
+                <h2 className="text-xl font-bold mb-2 text-center text-gray-800">Registros de {selectedName}</h2>
+                <p className="mb-2 text-center text-gray-700">
+                  Total Horas Trabajadas: <span className="font-bold">{totalHours}</span>
                 </p>
                 {loading ? (
                   <p className="text-center">Cargando...</p>
                 ) : (
-                  <div className="space-y-4">
+                  <ul className="divide-y divide-gray-200">
                     {records.length === 0 && (
-                      <div className="text-center text-gray-500">No hay registros.</div>
+                      <li className="py-2 text-center text-gray-500">No hay registros.</li>
                     )}
                     {records.map((record, idx) => (
-                      <div
+                      <li
                         key={record.id}
-                        ref={idx === 0 ? listRef : null}
-                        className="bg-white shadow-md rounded-lg p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between border border-gray-200"
+                        ref={idx === 0 ? listRef : null} // El más reciente primero
+                        className="py-2 flex flex-col sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div>
-                          <div className="text-gray-700"><span className="font-semibold">Inicio:</span> {formatDate(record.start_time)}</div>
-                          <div className="text-gray-700"><span className="font-semibold">Fin:</span> {formatDate(record.end_time)}</div>
-                          <div className="text-gray-700"><span className="font-semibold">Descripción:</span> {record.work_description || "Sin descripción"}</div>
-                          <div className="text-blue-700 font-bold"><span className="font-semibold">Horas:</span> {calculateHours(record.start_time, record.end_time)}</div>
+                          <span className="block text-gray-800"><strong>Inicio:</strong> {formatDate(record.start_time)}</span>
+                          <span className="block text-gray-800"><strong>Fin:</strong> {formatDate(record.end_time)}</span>
+                          <span className="block text-gray-800"><strong>Descripción:</strong> {record.work_description || "Sin descripción"}</span>
+                          <span className="block text-gray-800"><strong>Horas:</strong> {calculateHours(record.start_time, record.end_time)}</span>
                         </div>
                         <div className="flex gap-2 mt-2 sm:mt-0">
                           <button
-                            className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-4 rounded shadow transition"
+                            className="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-3 rounded"
                             onClick={() => handleEdit(record)}
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
                             Editar
                           </button>
                         </div>
-                      </div>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 )}
               </div>
             )}
@@ -387,18 +373,16 @@ export default function OvertimeForm() {
             {/* Botones de administración al final */}
             <div className="mt-12 flex flex-col gap-4">
               <button
-                className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded w-full shadow transition"
+                className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded w-full"
                 onClick={handleExportAll}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
-                Exportar Excel
+                Exportar toda la base de datos a Excel
               </button>
               <button
-                className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded w-full shadow transition"
+                className="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded w-full"
                 onClick={handleDeleteAll}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 3h4a2 2 0 012 2v2H8V5a2 2 0 012-2z" /></svg>
-                Borrar Base de Datos
+                Borrar TODOS los datos (admin)
               </button>
             </div>
           </div>
