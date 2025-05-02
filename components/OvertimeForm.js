@@ -19,17 +19,23 @@ function Toast({ message, onClose }) {
 }
 
 const technicians = [
-  "Roberto Córdova",
-  "Carlos Cisneros",
-  "Miguel Lozada",
-  "César Sánchez",
-  "Juan Carrión",
-  "Alex Haro",
-  "Dario Ojeda",
-  "José Urquizo",
-  "Kevin Vargas",
-  "Israel Pérez",
+"Carlos Cisneros",
+"Juan Carrión",
+"César Sánchez",
+"Miguel Lozada",
+"Roberto Córdova",
+
+"Alex Haro",
+"Dario Ojeda",
+"Israel Pérez",
+"José Urquizo",
+"Kevin Vargas",
+ 
+"Edisson Bejarano",
+"Leonardo Ballesteros",
 "Marlon Ortiz",
+
+
 ];
 
 function formatDateTime(date) {
