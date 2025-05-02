@@ -29,6 +29,7 @@ const technicians = [
   "José Urquizo",
   "Kevin Vargas",
   "Israel Pérez",
+"Marlon Ortiz",
 ];
 
 function formatDateTime(date) {
