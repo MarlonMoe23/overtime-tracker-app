@@ -19,40 +19,37 @@ function Toast({ message, onClose }) {
 }
 
 const technicians = [
-  "Carlos Cisneros",
-  "Juan Carrión",
-  "César Sánchez",
-  "Miguel Lozada",
-  "Roberto Córdova",
-  "Alex Haro",
-  "Dario Ojeda",
-  "Israel Pérez",
-  "José Urquizo",
-  "Kevin Vargas",
-  "Edisson Bejarano",
-  "Leonardo Ballesteros",
-  "Marlon Ortiz",
+"Carlos Cisneros",
+"Juan Carrión",
+"César Sánchez",
+"Miguel Lozada",
+"Roberto Córdova",
+
+"Alex Haro",
+"Dario Ojeda",
+"Israel Pérez",
+"José Urquizo",
+"Kevin Vargas",
+ 
+"Edisson Bejarano",
+"Leonardo Ballesteros",
+"Marlon Ortiz",
+
+
 ];
 
-// Formatea para input datetime-local (hora local)
-function formatDateTimeLocal(date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  const hours = String(date.getHours()).padStart(2, '0');
-  const minutes = String(date.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
+function formatDateTime(date) {
+  return date.toISOString().slice(0, 16);
 }
 
-// Formatea para mostrar (hora local)
 function formatDate(dateString) {
-  if (!dateString) return "";
   const d = new Date(dateString);
-  return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+  // Hora de Ecuador (UTC-5)
+  const ecuadorTime = new Date(d.getTime() - (5 * 60 * 60 * 1000));
+  return `${ecuadorTime.getDate().toString().padStart(2, '0')}/${(ecuadorTime.getMonth() + 1).toString().padStart(2, '0')}/${ecuadorTime.getFullYear()} ${ecuadorTime.getHours().toString().padStart(2, '0')}:${ecuadorTime.getMinutes().toString().padStart(2, '0')}`;
 }
 
 function calculateHours(start, end) {
-  if (!start || !end) return "00:00";
   const diffMs = new Date(end) - new Date(start);
   const totalMinutes = Math.floor(diffMs / (1000 * 60));
   const hours = Math.floor(totalMinutes / 60);
@@ -77,10 +74,11 @@ export default function OvertimeForm() {
 
   // Inicializa fechas
   useEffect(() => {
-    const now = new Date(); // Hora local
-    const startTimeLocal = new Date(now.getTime() - (2 * 60 * 60 * 1000)); // 2 horas antes
-    setStartTime(formatDateTimeLocal(startTimeLocal));
-    setEndTime(formatDateTimeLocal(now));
+    const now = new Date();
+    const ecuadorTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+    const startTimeEcuador = new Date(now.getTime() - (7 * 60 * 60 * 1000));
+    setStartTime(formatDateTime(startTimeEcuador));
+    setEndTime(formatDateTime(ecuadorTime));
   }, []);
 
   // Carga registros cuando se selecciona un técnico
@@ -148,8 +146,8 @@ export default function OvertimeForm() {
       const { error } = await supabase
         .from('overtime_records')
         .update({
-          start_time: startTime, // GUARDAR EL STRING
-          end_time: endTime,     // GUARDAR EL STRING
+          start_time: new Date(startTime),
+          end_time: new Date(endTime),
           work_description: workDescription,
         })
         .eq('id', editingId);
@@ -171,8 +169,8 @@ export default function OvertimeForm() {
       const { error } = await supabase.from('overtime_records').insert([
         {
           name: selectedName,
-          start_time: startTime, // GUARDAR EL STRING
-          end_time: endTime,     // GUARDAR EL STRING
+          start_time: new Date(startTime),
+          end_time: new Date(endTime),
           work_description: workDescription,
         },
       ]);
@@ -194,8 +192,8 @@ export default function OvertimeForm() {
   // Editar registro
   function handleEdit(record) {
     setEditingId(record.id);
-    setStartTime(record.start_time); // USAR EL STRING GUARDADO
-    setEndTime(record.end_time);     // USAR EL STRING GUARDADO
+    setStartTime(formatDateTime(new Date(record.start_time)));
+    setEndTime(formatDateTime(new Date(record.end_time)));
     setWorkDescription(record.work_description || "");
     setTimeout(() => {
       if (startInputRef.current) {
@@ -265,9 +263,10 @@ export default function OvertimeForm() {
   // Reset form
   function resetForm() {
     const now = new Date();
-    const startTimeLocal = new Date(now.getTime() - (2 * 60 * 60 * 1000));
-    setStartTime(formatDateTimeLocal(startTimeLocal));
-    setEndTime(formatDateTimeLocal(now));
+    const ecuadorTime = new Date(now.getTime() - (5 * 60 * 60 * 1000));
+    const startTimeEcuador = new Date(now.getTime() - (7 * 60 * 60 * 1000));
+    setStartTime(formatDateTime(startTimeEcuador));
+    setEndTime(formatDateTime(ecuadorTime));
     setWorkDescription('');
     setEditingId(null);
   }
