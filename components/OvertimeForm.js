@@ -205,6 +205,23 @@ export default function OvertimeForm() {
     }, 200);
   }
 
+  // Borrar registro individual
+  async function handleDeleteRecord(id) {
+    if (window.confirm("¿Está seguro de borrar este registro? Esta acción no se puede deshacer.")) {
+      const { error } = await supabase
+        .from('overtime_records')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        showToast('Error al borrar: ' + error.message);
+      } else {
+        showToast('Registro eliminado correctamente 🗑️');
+        await fetchRecords(selectedName);
+      }
+    }
+  }
+
   // Exportar a Excel (toda la base de datos, ordenada por nombre y fecha de inicio)
   async function handleExportAll() {
     const { data, error } = await supabase.from('overtime_records').select('*');
@@ -216,32 +233,62 @@ export default function OvertimeForm() {
       showToast('No hay datos para exportar.');
       return;
     }
+    
     // Ordenar por nombre y luego por fecha de inicio (ascendente)
-    const sortedData = [...data].sort((a, b) => {
-      if (a.name < b.name) return -1;
-      if (a.name > b.name) return 1;
-      return new Date(a.start_time) - new Date(b.start_time);
+    const sorted = [...data].sort((a, b) =>
+      a.name === b.name
+        ? new Date(a.start_time) - new Date(b.start_time)
+        : a.name.localeCompare(b.name)
+    );
+
+    // Construir los objetos usando Date y número
+    const exportData = sorted.map(r => {
+      const start = new Date(r.start_time);        // objeto Date
+      const end = new Date(r.end_time);            // objeto Date
+      const diff = (end - start) / (1000 * 60 * 60); // horas decimales
+
+      return {
+        'Técnico': r.name,
+        'Inicio': start,                // Date
+        'Fin': end,                     // Date
+        'Descripción': r.work_description || 'Sin descripción',
+        'Horas Trabajadas': diff        // número
+      };
     });
 
-    const exportData = sortedData.map((entry) => ({
-      'Técnico': entry.name,
-      'Inicio': formatDate(entry.start_time),
-      'Fin': formatDate(entry.end_time),
-      'Descripción': entry.work_description || 'Sin descripción',
-      'Horas Trabajadas': calculateHours(entry.start_time, entry.end_time),
-    }));
+    // Crear la hoja (cellDates:true hará que Inicio y Fin sean tipo 'd')
+    const ws = XLSX.utils.json_to_sheet(exportData, { cellDates: true });
 
-    const worksheet = XLSX.utils.json_to_sheet(exportData, { cellDates: true });
-    worksheet['!cols'] = [
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 40 },
-      { wch: 15 },
+    // Aplicar formatos de número (opcional pero recomendable)
+    const range = XLSX.utils.decode_range(ws['!ref']);
+
+    for (let C = range.s.c; C <= range.e.c; ++C) {
+      const header = ws[XLSX.utils.encode_cell({ c: C, r: 0 })].v;
+      for (let R = 1; R <= range.e.r; ++R) {
+        const addr = XLSX.utils.encode_cell({ c: C, r: R });
+        const cell = ws[addr];
+        if (!cell) continue;
+
+        if (header === 'Inicio' || header === 'Fin') {
+          cell.z = 'dd/mm/yyyy hh:mm';   // formato fecha-hora
+        }
+        if (header === 'Horas Trabajadas') {
+          cell.z = '0.00';               // dos decimales (ej. 4.25 h)
+        }
+      }
+    }
+
+    ws['!cols'] = [
+      { wch: 25 },  // Técnico
+      { wch: 20 },  // Inicio
+      { wch: 20 },  // Fin
+      { wch: 40 },  // Descripción
+      { wch: 15 }   // Horas Trabajadas
     ];
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Horas Extras');
-    XLSX.writeFile(workbook, 'horas_extras.xlsx');
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Horas Extras');
+    XLSX.writeFile(wb, 'horas_extras.xlsx');
     showToast('Exportado a Excel 📁');
   }
 
@@ -384,6 +431,13 @@ export default function OvertimeForm() {
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
                             Editar
                           </button>
+                          <button
+                            className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-4 rounded shadow transition"
+                            onClick={() => handleDeleteRecord(record.id)}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 3h4a2 2 0 012 2v2H8V5a2 2 0 012-2z" /></svg>
+                            Borrar
+                          </button>
                         </div>
                       </div>
                     ))}
@@ -398,7 +452,7 @@ export default function OvertimeForm() {
                 className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded w-full shadow transition"
                 onClick={handleExportAll}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round"  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
                 Exportar Excel
               </button>
               <button
