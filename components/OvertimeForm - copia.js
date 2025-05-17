@@ -205,6 +205,23 @@ export default function OvertimeForm() {
     }, 200);
   }
 
+  // Borrar registro individual
+  async function handleDeleteRecord(id) {
+    if (window.confirm("¿Está seguro de borrar este registro? Esta acción no se puede deshacer.")) {
+      const { error } = await supabase
+        .from('overtime_records')
+        .delete()
+        .eq('id', id);
+      
+      if (error) {
+        showToast('Error al borrar: ' + error.message);
+      } else {
+        showToast('Registro eliminado correctamente 🗑️');
+        await fetchRecords(selectedName);
+      }
+    }
+  }
+
   // Exportar a Excel (toda la base de datos, ordenada por nombre y fecha de inicio)
   async function handleExportAll() {
     const { data, error } = await supabase.from('overtime_records').select('*');
@@ -413,6 +430,13 @@ export default function OvertimeForm() {
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
                             Editar
+                          </button>
+                          <button
+                            className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-4 rounded shadow transition"
+                            onClick={() => handleDeleteRecord(record.id)}
+                          >
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 3h4a2 2 0 012 2v2H8V5a2 2 0 012-2z" /></svg>
+                            Borrar
                           </button>
                         </div>
                       </div>
