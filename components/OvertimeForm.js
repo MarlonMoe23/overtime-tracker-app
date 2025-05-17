@@ -410,7 +410,7 @@ export default function OvertimeForm() {
                     value={workDescription}
                     onChange={handleDescriptionChange}
                     rows="3"
-                    placeholder="Ejemplo: Reparación de bomba en central Sarapullo"
+                    placeholder="Ejemplo: CMS Limpieza de filtros en Y, 2 veces, de unidades 1 y 2"
                     aria-label="Descripción del Trabajo"
                     maxLength="100"
                     required
