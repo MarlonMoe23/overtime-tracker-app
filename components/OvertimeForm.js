@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, forwardRef } from "react";
+import React, { useState, useEffect, useRef, forwardRef, useCallback } from "react";
 import { supabase } from '../lib/supabase';
 import * as XLSX from "xlsx";
 import DatePicker from "react-datepicker";
@@ -53,19 +53,23 @@ function calculateHours(start, end) {
 }
 
 // Input personalizado para DatePicker que acepta ref
-const CustomInput = forwardRef(({ value, onClick, onChange, onFocus, placeholder, ariaLabel }, ref) => (
-  <input
-    ref={ref}
-    value={value}
-    onClick={onClick}
-    onChange={onChange}
-    onFocus={onFocus}
-    placeholder={placeholder}
-    aria-label={ariaLabel}
-    className="shadow border rounded w-full py-2 px-3 text-gray-700"
-    readOnly // para evitar edición manual y usar solo picker
-  />
-));
+const CustomInput = forwardRef(function CustomInput(props, ref) {
+  const { value, onClick, onChange, onFocus, placeholder, ariaLabel } = props;
+  return (
+    <input
+      ref={ref}
+      value={value}
+      onClick={onClick}
+      onChange={onChange}
+      onFocus={onFocus}
+      placeholder={placeholder}
+      aria-label={ariaLabel}
+      className="shadow border rounded w-full py-2 px-3 text-gray-700"
+      readOnly // para evitar edición manual y usar solo picker
+    />
+  );
+});
+CustomInput.displayName = "CustomInput";
 
 export default function OvertimeForm() {
   const [selectedName, setSelectedName] = useState("");
@@ -105,6 +109,26 @@ export default function OvertimeForm() {
     }
   }, [isClient]);
 
+  const showToast = useCallback((msg) => {
+    setToast(msg);
+  }, []);
+
+  const fetchRecords = useCallback(async (name) => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('overtime_records')
+      .select('*')
+      .eq('name', name)
+      .order('start_time', { ascending: false });
+    if (error) {
+      showToast("Error al cargar registros");
+      setRecords([]);
+    } else {
+      setRecords(data);
+    }
+    setLoading(false);
+  }, [showToast]);
+
   useEffect(() => {
     if (selectedName) {
       localStorage.setItem("lastTechnician", selectedName);
@@ -113,7 +137,7 @@ export default function OvertimeForm() {
       setRecords([]);
       setTotalHours("00:00");
     }
-  }, [selectedName]);
+  }, [selectedName, fetchRecords]);
 
   useEffect(() => {
     if (records.length > 0) {
@@ -137,26 +161,6 @@ export default function OvertimeForm() {
       setErrorStartEnd("");
     }
   }, [startTime, endTime]);
-
-  const showToast = (msg) => {
-    setToast(msg);
-  };
-
-  async function fetchRecords(name) {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('overtime_records')
-      .select('*')
-      .eq('name', name)
-      .order('start_time', { ascending: false });
-    if (error) {
-      showToast("Error al cargar registros");
-      setRecords([]);
-    } else {
-      setRecords(data);
-    }
-    setLoading(false);
-  }
 
   async function handleSave() {
     if (!selectedName || !startTime || !endTime || workDescription.trim() === "") {
