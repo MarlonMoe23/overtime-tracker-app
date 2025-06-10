@@ -385,19 +385,41 @@ export default function OvertimeForm() {
                       ⓘ
                     </span>
                   </label>
-                  <DatePicker
-                    selected={startTime}
-                    onChange={(date) => setStartTime(date)}
-                    showTimeSelect
-                    timeFormat="HH:mm"
-                    timeIntervals={5}
-                    dateFormat="dd/MM/yyyy HH:mm"
-                    className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
-                    maxDate={new Date()}
-                    placeholderText="Selecciona la hora de inicio"
-                    aria-label="Hora de Inicio"
-                    customInput={<CustomInput ref={startInputRef} />}
-                  />
+                 <DatePicker
+  selected={startTime}
+  onChange={(date) => setStartTime(date)}
+  showTimeSelect
+  timeFormat="HH:mm"
+  timeIntervals={5}
+  dateFormat="dd/MM/yyyy HH:mm"
+  className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
+  maxDate={new Date()}
+  placeholderText="Selecciona la hora de inicio"
+  aria-label="Hora de Inicio"
+  customInput={<CustomInput ref={startInputRef} />}
+  popperPlacement="bottom"
+  popperModifiers={[
+    {
+      name: "preventOverflow",
+      options: {
+        boundary: "viewport",
+        rootBoundary: "viewport",
+        tether: false,
+      },
+    },
+    {
+      name: "flip",
+      enabled: true,
+    },
+  ]}
+/>
+
+
+
+
+
+
+
                 </div>
 
                 <div className="mb-4">
@@ -407,7 +429,10 @@ export default function OvertimeForm() {
                       ⓘ
                     </span>
                   </label>
-                  <DatePicker
+                  
+
+
+<DatePicker
                     selected={endTime}
                     onChange={(date) => setEndTime(date)}
                     showTimeSelect
@@ -419,8 +444,30 @@ export default function OvertimeForm() {
                     placeholderText="Selecciona la hora de fin"
                     aria-label="Hora de Fin"
                     customInput={<CustomInput />}
-                  />
-                </div>
+                  
+popperPlacement="bottom"
+    popperModifiers={[
+      {
+        name: "preventOverflow",
+        options: {
+          boundary: "viewport",
+          rootBoundary: "viewport",
+          tether: false,
+        },
+      },
+      {
+        name: "flip",
+        enabled: true,
+      },
+    ]}
+
+
+
+/>
+                
+
+
+</div>
 
                 {errorStartEnd && <p className="text-red-500 text-sm mb-4">{errorStartEnd}</p>}
 
