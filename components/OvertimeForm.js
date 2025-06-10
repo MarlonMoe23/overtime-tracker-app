@@ -440,7 +440,7 @@ export default function OvertimeForm() {
                     onChange={(date) => setEndTime(date)}
                     showTimeSelect
                     timeFormat="HH:mm"
-                    timeIntervals={5}
+                    timeIntervals={1}
                     dateFormat="dd/MM/yyyy HH:mm"
                     className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
                     maxDate={new Date()}
