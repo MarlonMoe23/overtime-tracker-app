@@ -486,7 +486,7 @@ popperPlacement="bottom"
                     value={workDescription}
                     onChange={handleDescriptionChange}
                     rows="3"
-                    placeholder="Ejemplo: CMS Limpieza de filtros en Y, 2 veces, de unidades 1 y 2"
+                    placeholder="Ejemplo: Se hizo Limpieza de filtros en Y, 2 veces, de U1 y U2"
                     aria-label="Descripción del Trabajo"
                     maxLength="70"
                     required
