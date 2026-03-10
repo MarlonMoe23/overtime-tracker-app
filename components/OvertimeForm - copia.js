@@ -25,7 +25,6 @@ const technicians = [
 "Angelo Porras",
 "Carlos Cisneros",
 "César Sánchez",
-"Cristian Lara",
 "Dario Ojeda",
 "Edgar Ormaza",
 "Israel Pérez",
@@ -45,15 +44,28 @@ function formatDate(dateString) {
   return format(d, "dd/MM/yyyy HH:mm");
 }
 
+
+
+
 function calculateHours(start, end) {
-  if (!start || !end) return "00:00";
+  if (!start || !end) return "00:00 / 0.0";
+
   const diffMs = new Date(end) - new Date(start);
-  if (diffMs < 0) return "00:00";
+  if (diffMs < 0) return "00:00 / 0.0";
+
   const totalMinutes = Math.floor(diffMs / (1000 * 60));
+
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+  const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+  const decimalHours = (totalMinutes / 60).toFixed(1);
+
+  return `${hhmm} / ${decimalHours}`;
 }
+
+
 
 // Input personalizado para DatePicker que acepta ref
 const CustomInput = forwardRef(function CustomInput(props, ref) {
@@ -142,20 +154,34 @@ export default function OvertimeForm() {
     }
   }, [selectedName, fetchRecords]);
 
+
+
+
   useEffect(() => {
-    if (records.length > 0) {
-      let totalMinutes = 0;
-      records.forEach(r => {
-        const diff = new Date(r.end_time) - new Date(r.start_time);
-        if (diff > 0) totalMinutes += Math.floor(diff / (1000 * 60));
-      });
-      const hours = Math.floor(totalMinutes / 60);
-      const minutes = totalMinutes % 60;
-      setTotalHours(`${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`);
-    } else {
-      setTotalHours("00:00");
-    }
-  }, [records]);
+  if (records.length > 0) {
+    let totalMinutes = 0;
+
+    records.forEach(r => {
+      const diff = new Date(r.end_time) - new Date(r.start_time);
+      if (diff > 0) totalMinutes += Math.floor(diff / (1000 * 60));
+    });
+
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+
+    const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    const decimal = (totalMinutes / 60).toFixed(1);
+
+    setTotalHours(`${hhmm} / ${decimal}`);
+
+  } else {
+    setTotalHours("00:00 / 0.0");
+  }
+}, [records]);
+
+
+
+
 
   useEffect(() => {
     if (startTime && endTime && startTime >= endTime) {
@@ -253,69 +279,109 @@ export default function OvertimeForm() {
     }
   }
 
-  async function handleExportAll() {
-    const { data, error } = await supabase.from('overtime_records').select('*');
-    if (error) {
-      showToast('Error al exportar: ' + error.message);
-      return;
-    }
-    if (!data || data.length === 0) {
-      showToast('No hay datos para exportar.');
-      return;
-    }
-    
-    const sorted = [...data].sort((a, b) =>
-      a.name === b.name
-        ? new Date(a.start_time) - new Date(b.start_time)
-        : a.name.localeCompare(b.name)
-    );
 
-    const exportData = sorted.map(r => {
-      const start = new Date(r.start_time);
-      const end = new Date(r.end_time);
-      const diff = (end - start) / (1000 * 60 * 60);
 
-      return {
-        'Técnico': r.name,
-        'Inicio': start,
-        'Fin': end,
-        'Descripción': r.work_description || 'Sin descripción',
-        'Horas Trabajadas': diff
-      };
-    });
+async function handleExportAll() {
+  const { data, error } = await supabase.from('overtime_records').select('*');
 
-    const ws = XLSX.utils.json_to_sheet(exportData, { cellDates: true });
-
-    const range = XLSX.utils.decode_range(ws['!ref']);
-    for (let C = range.s.c; C <= range.e.c; ++C) {
-      const header = ws[XLSX.utils.encode_cell({ c: C, r: 0 })].v;
-      for (let R = 1; R <= range.e.r; ++R) {
-        const addr = XLSX.utils.encode_cell({ c: C, r: R });
-        const cell = ws[addr];
-        if (!cell) continue;
-
-        if (header === 'Inicio' || header === 'Fin') {
-          cell.z = 'dd/mm/yyyy hh:mm';
-        }
-        if (header === 'Horas Trabajadas') {
-          cell.z = '0.00';
-        }
-      }
-    }
-
-    ws['!cols'] = [
-      { wch: 25 },
-      { wch: 20 },
-      { wch: 20 },
-      { wch: 40 },
-      { wch: 15 }
-    ];
-
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Horas Extras');
-    XLSX.writeFile(wb, 'horas_extras.xlsx');
-    showToast('Exportado a Excel 📁');
+  if (error) {
+    showToast('Error al exportar: ' + error.message);
+    return;
   }
+
+  if (!data || data.length === 0) {
+    showToast('No hay datos para exportar.');
+    return;
+  }
+
+  const sorted = [...data].sort((a, b) =>
+    a.name === b.name
+      ? new Date(a.start_time) - new Date(b.start_time)
+      : a.name.localeCompare(b.name)
+  );
+
+  // HOJA ORIGINAL
+  const exportData = sorted.map(r => {
+    const start = new Date(r.start_time);
+    const end = new Date(r.end_time);
+    const diff = (end - start) / (1000 * 60 * 60);
+
+    return {
+      'Técnico': r.name,
+      'Inicio': start,
+      'Fin': end,
+      'Descripción': r.work_description || 'Sin descripción',
+      'Horas Trabajadas': diff
+    };
+  });
+
+  const ws1 = XLSX.utils.json_to_sheet(exportData, { cellDates: true });
+
+  // ==========================
+  // NUEVA HOJA FORMATO ADMIN
+  // ==========================
+
+  const adminRows = [];
+
+  sorted.forEach(r => {
+
+    let start = new Date(r.start_time);
+    const end = new Date(r.end_time);
+
+    while (start < end) {
+
+      const midnight = new Date(start);
+      midnight.setHours(24, 0, 0, 0);
+
+      const segmentEnd = end < midnight ? end : midnight;
+
+      const diffHours = (segmentEnd - start) / (1000 * 60 * 60);
+
+      const pad = (n) => String(n).padStart(2, "0");
+
+      adminRows.push({
+        "Tecnico": r.name,
+        "Dia del Mes": start.getDate(),
+        "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`,
+        "Hora Final": `${pad(segmentEnd.getHours())}:${pad(segmentEnd.getMinutes())}`,
+        "Horas": Number(diffHours.toFixed(2))
+      });
+
+      start = segmentEnd;
+    }
+  });
+
+const ws2 = XLSX.utils.json_to_sheet(adminRows);
+
+
+
+  ws2['!cols'] = [
+    { wch: 25 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 12 },
+    { wch: 10 }
+  ];
+
+  // ==========================
+  // CREAR ARCHIVO EXCEL
+  // ==========================
+
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
+  XLSX.utils.book_append_sheet(wb, ws2, 'Formato Admin');
+
+  XLSX.writeFile(wb, 'horas_extras.xlsx');
+
+  showToast('Exportado a Excel 📁');
+}
+
+
+
+  
+
+
 
   async function handleDeleteAll() {
     const code = prompt("Para borrar todos los datos, ingresa el código:");
