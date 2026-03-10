@@ -21,16 +21,19 @@ function Toast({ message, onClose }) {
 }
 
 const technicians = [
-  "Carlos Cisneros",
-  "Juan Carrión",
-  "César Sánchez",
-  "Miguel Lozada",
-  "Roberto Córdova",
-  "Alex Haro",
-  "Dario Ojeda",
-  "Israel Pérez",
-  "José Urquizo",
-  "Kevin Vargas",
+ "Alex Haro",
+"Angelo Porras",
+"Carlos Cisneros",
+"César Sánchez",
+"Cristian Lara",
+"Dario Ojeda",
+"Edgar Ormaza",
+"Israel Pérez",
+"José Urquizo",
+"Juan Carrión",
+"Kevin Vargas",
+"Miguel Lozada",
+"Roberto Córdova",
   "Edisson Bejarano",
   "Leonardo Ballesteros",
   "Marlon Ortiz",
@@ -342,7 +345,7 @@ export default function OvertimeForm() {
 
   const handleDescriptionChange = (e) => {
     const text = e.target.value;
-    if (text.length <= 100) {
+    if (text.length <= 70) {
       setWorkDescription(text);
       setDescriptionLength(text.length);
     }
@@ -390,7 +393,7 @@ export default function OvertimeForm() {
   onChange={(date) => setStartTime(date)}
   showTimeSelect
   timeFormat="HH:mm"
-  timeIntervals={5}
+  timeIntervals={1}
   dateFormat="dd/MM/yyyy HH:mm"
   className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
   maxDate={new Date()}
@@ -437,7 +440,7 @@ export default function OvertimeForm() {
                     onChange={(date) => setEndTime(date)}
                     showTimeSelect
                     timeFormat="HH:mm"
-                    timeIntervals={5}
+                    timeIntervals={1}
                     dateFormat="dd/MM/yyyy HH:mm"
                     className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
                     maxDate={new Date()}
@@ -483,12 +486,12 @@ popperPlacement="bottom"
                     value={workDescription}
                     onChange={handleDescriptionChange}
                     rows="3"
-                    placeholder="Ejemplo: CMS Limpieza de filtros en Y, 2 veces, de unidades 1 y 2"
+                    placeholder="Ejemplo: Se hizo Limpieza de filtros en Y, 2 veces, de U1 y U2"
                     aria-label="Descripción del Trabajo"
-                    maxLength="100"
+                    maxLength="70"
                     required
                   />
-                  <p className="text-gray-500 text-sm text-right">{descriptionLength}/100</p>
+                  <p className="text-gray-500 text-sm text-right">{descriptionLength}/70</p>
                 </div>
 
                 <div className="mt-8 space-y-4">

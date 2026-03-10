@@ -25,7 +25,6 @@ const technicians = [
 "Angelo Porras",
 "Carlos Cisneros",
 "César Sánchez",
-"Cristian Lara",
 "Dario Ojeda",
 "Edgar Ormaza",
 "Israel Pérez",
@@ -45,15 +44,28 @@ function formatDate(dateString) {
   return format(d, "dd/MM/yyyy HH:mm");
 }
 
+
+
+
 function calculateHours(start, end) {
-  if (!start || !end) return "00:00";
+  if (!start || !end) return "00:00 / 0.0";
+
   const diffMs = new Date(end) - new Date(start);
-  if (diffMs < 0) return "00:00";
+  if (diffMs < 0) return "00:00 / 0.0";
+
   const totalMinutes = Math.floor(diffMs / (1000 * 60));
+
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-  return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+  const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+
+  const decimalHours = (totalMinutes / 60).toFixed(1);
+
+  return `${hhmm} / ${decimalHours}`;
 }
+
+
 
 // Input personalizado para DatePicker que acepta ref
 const CustomInput = forwardRef(function CustomInput(props, ref) {
