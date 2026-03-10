@@ -353,17 +353,25 @@ async function handleExportAll() {
 
 const ws2 = XLSX.utils.json_to_sheet(adminRows);
 
+
+
 // Centrar columnas B, C, D y E
 const range = XLSX.utils.decode_range(ws2['!ref']);
 
-for (let R = 1; R <= range.e.r; ++R) {
-  ['B','C','D','E'].forEach(col => {
-    const cell = ws2[col + (R+1)];
-    if (cell) {
-      cell.s = { alignment: { horizontal: "center" } };
-    }
-  });
+for (let C = 1; C <= 4; ++C) {   // columnas B-E
+  for (let R = 0; R <= range.e.r; ++R) {
+
+    const cellAddress = XLSX.utils.encode_cell({ r: R, c: C });
+
+    if (!ws2[cellAddress]) continue;
+
+    ws2[cellAddress].s = {
+      alignment: { horizontal: "center" }
+    };
+  }
 }
+
+
 
 
 
