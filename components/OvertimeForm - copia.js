@@ -44,30 +44,18 @@ function formatDate(dateString) {
   return format(d, "dd/MM/yyyy HH:mm");
 }
 
-
-
-
 function calculateHours(start, end) {
   if (!start || !end) return "00:00 / 0.0";
-
   const diffMs = new Date(end) - new Date(start);
   if (diffMs < 0) return "00:00 / 0.0";
-
   const totalMinutes = Math.floor(diffMs / (1000 * 60));
-
   const hours = Math.floor(totalMinutes / 60);
   const minutes = totalMinutes % 60;
-
   const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-
   const decimalHours = (totalMinutes / 60).toFixed(1);
-
   return `${hhmm} / ${decimalHours}`;
 }
 
-
-
-// Input personalizado para DatePicker que acepta ref
 const CustomInput = forwardRef(function CustomInput(props, ref) {
   const { value, onClick, onChange, onFocus, placeholder, ariaLabel } = props;
   return (
@@ -80,7 +68,7 @@ const CustomInput = forwardRef(function CustomInput(props, ref) {
       placeholder={placeholder}
       aria-label={ariaLabel}
       className="shadow border rounded w-full py-2 px-3 text-gray-700"
-      readOnly // para evitar edición manual y usar solo picker
+      readOnly
     />
   );
 });
@@ -103,8 +91,8 @@ export default function OvertimeForm() {
 
   const listRef = useRef(null);
   const startInputRef = useRef(null);
-  const formRef = useRef(null); // Ref para el formulario completo
-  const formFieldsRef = useRef(null); // Ref para los campos del formulario
+  const formRef = useRef(null);
+  const formFieldsRef = useRef(null);
 
   useEffect(() => {
     const now = new Date();
@@ -113,9 +101,7 @@ export default function OvertimeForm() {
     setEndTime(now);
   }, []);
 
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
+  useEffect(() => { setIsClient(true); }, []);
 
   useEffect(() => {
     if (isClient) {
@@ -124,9 +110,7 @@ export default function OvertimeForm() {
     }
   }, [isClient]);
 
-  const showToast = useCallback((msg) => {
-    setToast(msg);
-  }, []);
+  const showToast = useCallback((msg) => { setToast(msg); }, []);
 
   const fetchRecords = useCallback(async (name) => {
     setLoading(true);
@@ -154,34 +138,22 @@ export default function OvertimeForm() {
     }
   }, [selectedName, fetchRecords]);
 
-
-
-
   useEffect(() => {
-  if (records.length > 0) {
-    let totalMinutes = 0;
-
-    records.forEach(r => {
-      const diff = new Date(r.end_time) - new Date(r.start_time);
-      if (diff > 0) totalMinutes += Math.floor(diff / (1000 * 60));
-    });
-
-    const hours = Math.floor(totalMinutes / 60);
-    const minutes = totalMinutes % 60;
-
-    const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
-    const decimal = (totalMinutes / 60).toFixed(1);
-
-    setTotalHours(`${hhmm} / ${decimal}`);
-
-  } else {
-    setTotalHours("00:00 / 0.0");
-  }
-}, [records]);
-
-
-
-
+    if (records.length > 0) {
+      let totalMinutes = 0;
+      records.forEach(r => {
+        const diff = new Date(r.end_time) - new Date(r.start_time);
+        if (diff > 0) totalMinutes += Math.floor(diff / (1000 * 60));
+      });
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      const hhmm = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+      const decimal = (totalMinutes / 60).toFixed(1);
+      setTotalHours(`${hhmm} / ${decimal}`);
+    } else {
+      setTotalHours("00:00 / 0.0");
+    }
+  }, [records]);
 
   useEffect(() => {
     if (startTime && endTime && startTime >= endTime) {
@@ -200,43 +172,32 @@ export default function OvertimeForm() {
       showToast('⚠️ La hora de inicio debe ser antes que la de fin.');
       return;
     }
-
     setSaving(true);
-
     const startLocal = format(startTime, "yyyy-MM-dd'T'HH:mm:ss");
     const endLocal = format(endTime, "yyyy-MM-dd'T'HH:mm:ss");
-
     try {
       if (editingId) {
         const { error } = await supabase
           .from('overtime_records')
-          .update({
-            start_time: startLocal,
-            end_time: endLocal,
-            work_description: workDescription,
-          })
+          .update({ start_time: startLocal, end_time: endLocal, work_description: workDescription })
           .eq('id', editingId);
         if (error) throw error;
         showToast('Registro actualizado ✅');
         setEditingId(null);
       } else {
-        const { error } = await supabase.from('overtime_records').insert([
-          {
-            name: selectedName,
-            start_time: startLocal,
-            end_time: endLocal,
-            work_description: workDescription,
-          },
-        ]);
+        const { error } = await supabase.from('overtime_records').insert([{
+          name: selectedName,
+          start_time: startLocal,
+          end_time: endLocal,
+          work_description: workDescription,
+        }]);
         if (error) throw error;
         showToast('¡Registro guardado exitosamente!');
       }
       await fetchRecords(selectedName);
       resetForm();
       setTimeout(() => {
-        if (listRef.current) {
-          listRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
+        if (listRef.current) listRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 200);
     } catch (error) {
       showToast('Error al guardar: ' + error.message);
@@ -251,25 +212,15 @@ export default function OvertimeForm() {
     setEndTime(new Date(record.end_time));
     setWorkDescription(record.work_description || "");
     setDescriptionLength(record.work_description ? record.work_description.length : 0);
-
-    // Scroll suave al formulario y focus en input inicio
     setTimeout(() => {
-      if (formFieldsRef.current) {
-        formFieldsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
-      }
-      if (startInputRef.current) {
-        startInputRef.current.focus();
-      }
+      if (formFieldsRef.current) formFieldsRef.current.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (startInputRef.current) startInputRef.current.focus();
     }, 200);
   }
 
   async function handleDeleteRecord(id) {
     if (window.confirm("¿Está seguro de borrar este registro? Esta acción no se puede deshacer.")) {
-      const { error } = await supabase
-        .from('overtime_records')
-        .delete()
-        .eq('id', id);
-      
+      const { error } = await supabase.from('overtime_records').delete().eq('id', id);
       if (error) {
         showToast('Error al borrar: ' + error.message);
       } else {
@@ -279,116 +230,110 @@ export default function OvertimeForm() {
     }
   }
 
+  async function handleExportAll() {
+    const { data, error } = await supabase.from('overtime_records').select('*');
+    if (error) { showToast('Error al exportar: ' + error.message); return; }
+    if (!data || data.length === 0) { showToast('No hay datos para exportar.'); return; }
 
+    const sorted = [...data].sort((a, b) =>
+      a.name === b.name
+        ? new Date(a.start_time) - new Date(b.start_time)
+        : a.name.localeCompare(b.name)
+    );
 
-async function handleExportAll() {
-  const { data, error } = await supabase.from('overtime_records').select('*');
+    const exportData = sorted.map(r => {
+      const start = new Date(r.start_time);
+      const end = new Date(r.end_time);
+      const diff = (end - start) / (1000 * 60 * 60);
+      return {
+        'Técnico': r.name,
+        'Inicio': start,
+        'Fin': end,
+        'Descripción': r.work_description || 'Sin descripción',
+        'Horas Trabajadas': diff
+      };
+    });
 
-  if (error) {
-    showToast('Error al exportar: ' + error.message);
-    return;
+    const ws1 = XLSX.utils.json_to_sheet(exportData, { cellDates: true });
+
+    const adminRows = [];
+    sorted.forEach(r => {
+      let start = new Date(r.start_time);
+      const end = new Date(r.end_time);
+      while (start < end) {
+        const midnight = new Date(start);
+        midnight.setHours(24, 0, 0, 0);
+        const segmentEnd = end < midnight ? end : midnight;
+        const diffHours = (segmentEnd - start) / (1000 * 60 * 60);
+        const pad = (n) => String(n).padStart(2, "0");
+        adminRows.push({
+          "Tecnico": r.name,
+          "Dia del Mes": start.getDate(),
+          "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`,
+          "Hora Final": `${pad(segmentEnd.getHours())}:${pad(segmentEnd.getMinutes())}`,
+          "Horas": Number(diffHours.toFixed(2))
+        });
+        start = segmentEnd;
+      }
+    });
+
+    const ws2 = XLSX.utils.json_to_sheet(adminRows);
+    ws2['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
+    XLSX.utils.book_append_sheet(wb, ws2, 'Formato Admin');
+    XLSX.writeFile(wb, 'horas_extras.xlsx');
+    showToast('Exportado a Excel 📁');
   }
 
-  if (!data || data.length === 0) {
-    showToast('No hay datos para exportar.');
-    return;
+  async function handleExportSingle() {
+    if (!selectedName) { showToast('Selecciona un técnico primero.'); return; }
+
+    const { data, error } = await supabase
+      .from('overtime_records')
+      .select('*')
+      .eq('name', selectedName)
+      .order('start_time', { ascending: true });
+
+    if (error) { showToast('Error al exportar: ' + error.message); return; }
+    if (!data || data.length === 0) { showToast('No hay datos para exportar.'); return; }
+
+    const adminRows = [];
+    data.forEach(r => {
+      let start = new Date(r.start_time);
+      const end = new Date(r.end_time);
+      while (start < end) {
+        const midnight = new Date(start);
+        midnight.setHours(24, 0, 0, 0);
+        const segmentEnd = end < midnight ? end : midnight;
+        const diffHours = (segmentEnd - start) / (1000 * 60 * 60);
+        const pad = (n) => String(n).padStart(2, "0");
+        adminRows.push({
+          "Tecnico": r.name,
+          "Dia del Mes": start.getDate(),
+          "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`,
+          "Hora Final": `${pad(segmentEnd.getHours())}:${pad(segmentEnd.getMinutes())}`,
+          "Horas": Number(diffHours.toFixed(2))
+        });
+        start = segmentEnd;
+      }
+    });
+
+    const ws = XLSX.utils.json_to_sheet(adminRows);
+    ws['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 12 }, { wch: 12 }, { wch: 10 }];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Formato Admin');
+
+    const safeName = selectedName.replace(/ /g, '_');
+    XLSX.writeFile(wb, `horas_extras_${safeName}.xlsx`);
+    showToast(`Exportado: ${selectedName} 📁`);
   }
-
-  const sorted = [...data].sort((a, b) =>
-    a.name === b.name
-      ? new Date(a.start_time) - new Date(b.start_time)
-      : a.name.localeCompare(b.name)
-  );
-
-  // HOJA ORIGINAL
-  const exportData = sorted.map(r => {
-    const start = new Date(r.start_time);
-    const end = new Date(r.end_time);
-    const diff = (end - start) / (1000 * 60 * 60);
-
-    return {
-      'Técnico': r.name,
-      'Inicio': start,
-      'Fin': end,
-      'Descripción': r.work_description || 'Sin descripción',
-      'Horas Trabajadas': diff
-    };
-  });
-
-  const ws1 = XLSX.utils.json_to_sheet(exportData, { cellDates: true });
-
-  // ==========================
-  // NUEVA HOJA FORMATO ADMIN
-  // ==========================
-
-  const adminRows = [];
-
-  sorted.forEach(r => {
-
-    let start = new Date(r.start_time);
-    const end = new Date(r.end_time);
-
-    while (start < end) {
-
-      const midnight = new Date(start);
-      midnight.setHours(24, 0, 0, 0);
-
-      const segmentEnd = end < midnight ? end : midnight;
-
-      const diffHours = (segmentEnd - start) / (1000 * 60 * 60);
-
-      const pad = (n) => String(n).padStart(2, "0");
-
-      adminRows.push({
-        "Tecnico": r.name,
-        "Dia del Mes": start.getDate(),
-        "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`,
-        "Hora Final": `${pad(segmentEnd.getHours())}:${pad(segmentEnd.getMinutes())}`,
-        "Horas": Number(diffHours.toFixed(2))
-      });
-
-      start = segmentEnd;
-    }
-  });
-
-const ws2 = XLSX.utils.json_to_sheet(adminRows);
-
-
-
-  ws2['!cols'] = [
-    { wch: 25 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 12 },
-    { wch: 10 }
-  ];
-
-  // ==========================
-  // CREAR ARCHIVO EXCEL
-  // ==========================
-
-  const wb = XLSX.utils.book_new();
-
-  XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
-  XLSX.utils.book_append_sheet(wb, ws2, 'Formato Admin');
-
-  XLSX.writeFile(wb, 'horas_extras.xlsx');
-
-  showToast('Exportado a Excel 📁');
-}
-
-
-
-  
-
-
 
   async function handleDeleteAll() {
     const code = prompt("Para borrar todos los datos, ingresa el código:");
-    if (code !== "23") {
-      showToast("Código incorrecto. No se borró nada.");
-      return;
-    }
+    if (code !== "23") { showToast("Código incorrecto. No se borró nada."); return; }
     const { error } = await supabase.from('overtime_records').delete().neq('id', 0);
     if (error) {
       showToast('Error al borrar: ' + error.message);
@@ -440,9 +385,7 @@ const ws2 = XLSX.utils.json_to_sheet(adminRows);
                   >
                     <option value="">Seleccione un técnico</option>
                     {technicians.map((tech) => (
-                      <option key={tech} value={tech}>
-                        {tech}
-                      </option>
+                      <option key={tech} value={tech}>{tech}</option>
                     ))}
                   </select>
                 </div>
@@ -450,58 +393,34 @@ const ws2 = XLSX.utils.json_to_sheet(adminRows);
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Hora de Inicio
-                    <span className="ml-1 text-gray-400 cursor-pointer" title="Selecciona la hora de inicio">
-                      ⓘ
-                    </span>
+                    <span className="ml-1 text-gray-400 cursor-pointer" title="Selecciona la hora de inicio">ⓘ</span>
                   </label>
-                 <DatePicker
-  selected={startTime}
-  onChange={(date) => setStartTime(date)}
-  showTimeSelect
-  timeFormat="HH:mm"
-  timeIntervals={1}
-  dateFormat="dd/MM/yyyy HH:mm"
-  className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
-  maxDate={new Date()}
-  placeholderText="Selecciona la hora de inicio"
-  aria-label="Hora de Inicio"
-  customInput={<CustomInput ref={startInputRef} />}
-  popperPlacement="bottom"
-  popperModifiers={[
-    {
-      name: "preventOverflow",
-      options: {
-        boundary: "viewport",
-        rootBoundary: "viewport",
-        tether: false,
-      },
-    },
-    {
-      name: "flip",
-      enabled: true,
-    },
-  ]}
-/>
-
-
-
-
-
-
-
+                  <DatePicker
+                    selected={startTime}
+                    onChange={(date) => setStartTime(date)}
+                    showTimeSelect
+                    timeFormat="HH:mm"
+                    timeIntervals={1}
+                    dateFormat="dd/MM/yyyy HH:mm"
+                    className={`shadow border rounded w-full py-2 px-3 text-gray-700 ${errorStartEnd ? 'border-red-500' : ''}`}
+                    maxDate={new Date()}
+                    placeholderText="Selecciona la hora de inicio"
+                    aria-label="Hora de Inicio"
+                    customInput={<CustomInput ref={startInputRef} />}
+                    popperPlacement="bottom"
+                    popperModifiers={[
+                      { name: "preventOverflow", options: { boundary: "viewport", rootBoundary: "viewport", tether: false } },
+                      { name: "flip", enabled: true },
+                    ]}
+                  />
                 </div>
 
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Hora de Fin
-                    <span className="ml-1 text-gray-400 cursor-pointer" title="Selecciona la hora de fin">
-                      ⓘ
-                    </span>
+                    <span className="ml-1 text-gray-400 cursor-pointer" title="Selecciona la hora de fin">ⓘ</span>
                   </label>
-                  
-
-
-<DatePicker
+                  <DatePicker
                     selected={endTime}
                     onChange={(date) => setEndTime(date)}
                     showTimeSelect
@@ -513,39 +432,20 @@ const ws2 = XLSX.utils.json_to_sheet(adminRows);
                     placeholderText="Selecciona la hora de fin"
                     aria-label="Hora de Fin"
                     customInput={<CustomInput />}
-                  
-popperPlacement="bottom"
-    popperModifiers={[
-      {
-        name: "preventOverflow",
-        options: {
-          boundary: "viewport",
-          rootBoundary: "viewport",
-          tether: false,
-        },
-      },
-      {
-        name: "flip",
-        enabled: true,
-      },
-    ]}
-
-
-
-/>
-                
-
-
-</div>
+                    popperPlacement="bottom"
+                    popperModifiers={[
+                      { name: "preventOverflow", options: { boundary: "viewport", rootBoundary: "viewport", tether: false } },
+                      { name: "flip", enabled: true },
+                    ]}
+                  />
+                </div>
 
                 {errorStartEnd && <p className="text-red-500 text-sm mb-4">{errorStartEnd}</p>}
 
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
                     Descripción del Trabajo
-                    <span className="ml-1 text-gray-400 cursor-pointer" title="Describe brevemente el trabajo realizado">
-                      ⓘ
-                    </span>
+                    <span className="ml-1 text-gray-400 cursor-pointer" title="Describe brevemente el trabajo realizado">ⓘ</span>
                   </label>
                   <textarea
                     className="shadow border rounded w-full py-2 px-3 text-gray-700"
@@ -566,7 +466,6 @@ popperPlacement="bottom"
                     className={`bg-blue-600 text-white font-bold py-3 px-4 rounded w-full shadow transition 
                       ${!!errorStartEnd || !selectedName || !startTime || !endTime || workDescription.trim() === "" || saving ? 'opacity-50 cursor-not-allowed' : 'hover:bg-blue-700'}`}
                     onClick={handleSave}
-                    aria-disabled={!!errorStartEnd || !selectedName || !startTime || !endTime || workDescription.trim() === "" || saving}
                   >
                     {saving ? (
                       <svg className="animate-spin h-5 w-5 mx-auto text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -610,7 +509,6 @@ popperPlacement="bottom"
                           <button
                             className="flex items-center gap-1 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-1 px-4 rounded shadow transition"
                             onClick={() => handleEdit(record)}
-                            aria-label={`Editar registro iniciado el ${formatDate(record.start_time)}`}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h6a2 2 0 002-2v-6a2 2 0 00-2-2h-6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>
                             Editar
@@ -618,7 +516,6 @@ popperPlacement="bottom"
                           <button
                             className="flex items-center gap-1 bg-red-500 hover:bg-red-600 text-white font-bold py-1 px-4 rounded shadow transition"
                             onClick={() => handleDeleteRecord(record.id)}
-                            aria-label={`Borrar registro iniciado el ${formatDate(record.start_time)}`}
                           >
                             <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6M1 7h22M10 3h4a2 2 0 012 2v2H8V5a2 2 0 012-2z" /></svg>
                             Borrar
@@ -632,13 +529,23 @@ popperPlacement="bottom"
             )}
 
             <div className="mt-12 flex flex-col gap-4">
+              {selectedName && (
+                <button
+                  className="flex items-center justify-center gap-2 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded w-full shadow transition"
+                  onClick={handleExportSingle}
+                  aria-label={`Exportar mis horas - ${selectedName}`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+                  Exportar Mis Horas
+                </button>
+              )}
               <button
                 className="flex items-center justify-center gap-2 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded w-full shadow transition"
                 onClick={handleExportAll}
                 aria-label="Exportar todos los registros a Excel"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round"  d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
-                Exportar Excel
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5 5 5-5M12 15V3" /></svg>
+                Exportar Excel (Todo)
               </button>
               <button
                 className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded w-full shadow transition"
