@@ -351,7 +351,21 @@ async function handleExportAll() {
     }
   });
 
-  const ws2 = XLSX.utils.json_to_sheet(adminRows);
+const ws2 = XLSX.utils.json_to_sheet(adminRows);
+
+// Centrar columnas B, C, D y E
+const range = XLSX.utils.decode_range(ws2['!ref']);
+
+for (let R = 1; R <= range.e.r; ++R) {
+  ['B','C','D','E'].forEach(col => {
+    const cell = ws2[col + (R+1)];
+    if (cell) {
+      cell.s = { alignment: { horizontal: "center" } };
+    }
+  });
+}
+
+
 
   ws2['!cols'] = [
     { wch: 25 },
