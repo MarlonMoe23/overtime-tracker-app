@@ -121,7 +121,6 @@ function calculateHours(start, end) {
   return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')} / ${(totalMinutes / 60).toFixed(1)}`;
 }
 
-// ✅ Función reutilizable — evita código duplicado en los dos exports
 function buildAdminRows(records) {
   const rows = [];
   records.forEach(r => {
@@ -180,6 +179,11 @@ export default function OvertimeForm() {
   const [descriptionLength, setDescriptionLength] = useState(0);
   const [isClient, setIsClient] = useState(false);
 
+  // ── NUEVO: filtro mes/año ──────────────────────────────────────────────────
+  const currentDate = new Date();
+  const [selectedMonth, setSelectedMonth] = useState(currentDate.getMonth() + 1);
+  const [selectedYear, setSelectedYear] = useState(currentDate.getFullYear());
+
   // Modal state
   const [deleteAllModal, setDeleteAllModal] = useState(false);
   const [deleteRecordModal, setDeleteRecordModal] = useState({ open: false, id: null });
@@ -197,33 +201,50 @@ export default function OvertimeForm() {
 
   useEffect(() => { setIsClient(true); }, []);
 
+  // ── MODIFICADO: también persiste mes y año ────────────────────────────────
   useEffect(() => {
-    if (isClient) setSelectedName(localStorage.getItem("lastTechnician") || "");
+    if (isClient) {
+      setSelectedName(localStorage.getItem("lastTechnician") || "");
+      setSelectedMonth(Number(localStorage.getItem("lastMonth")) || new Date().getMonth() + 1);
+      setSelectedYear(Number(localStorage.getItem("lastYear")) || new Date().getFullYear());
+    }
   }, [isClient]);
 
   const showToast = useCallback((msg) => setToast(msg), []);
 
-  const fetchRecords = useCallback(async (name) => {
+  // ── MODIFICADO: filtra por mes y año en Supabase ──────────────────────────
+  const fetchRecords = useCallback(async (name, month, year) => {
     setLoading(true);
+    const startOfMonth = `${year}-${String(month).padStart(2, "0")}-01T00:00:00`;
+    const endMonth = month === 12 ? 1 : month + 1;
+    const endYear = month === 12 ? year + 1 : year;
+    const startOfNextMonth = `${endYear}-${String(endMonth).padStart(2, "0")}-01T00:00:00`;
+
     const { data, error } = await supabase
       .from('overtime_records')
       .select('*')
       .eq('name', name)
+      .gte('start_time', startOfMonth)
+      .lt('start_time', startOfNextMonth)
       .order('start_time', { ascending: false });
+
     if (error) { showToast("Error al cargar registros"); setRecords([]); }
     else setRecords(data);
     setLoading(false);
   }, [showToast]);
 
+  // ── MODIFICADO: reacciona también a cambios de mes/año ───────────────────
   useEffect(() => {
     if (selectedName) {
       localStorage.setItem("lastTechnician", selectedName);
-      fetchRecords(selectedName);
+      localStorage.setItem("lastMonth", selectedMonth);
+      localStorage.setItem("lastYear", selectedYear);
+      fetchRecords(selectedName, selectedMonth, selectedYear);
     } else {
       setRecords([]);
       setTotalHours("00:00 / 0.0");
     }
-  }, [selectedName, fetchRecords]);
+  }, [selectedName, selectedMonth, selectedYear, fetchRecords]);
 
   useEffect(() => {
     if (records.length > 0) {
@@ -273,7 +294,7 @@ export default function OvertimeForm() {
         if (error) throw error;
         showToast('¡Registro guardado exitosamente!');
       }
-      await fetchRecords(selectedName);
+      await fetchRecords(selectedName, selectedMonth, selectedYear);
       resetForm();
       setTimeout(() => listRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 200);
     } catch (error) {
@@ -298,7 +319,7 @@ export default function OvertimeForm() {
   async function handleDeleteRecord(id) {
     const { error } = await supabase.from('overtime_records').delete().eq('id', id);
     if (error) showToast('Error al borrar: ' + error.message);
-    else { showToast('Registro eliminado correctamente 🗑️'); await fetchRecords(selectedName); }
+    else { showToast('Registro eliminado correctamente 🗑️'); await fetchRecords(selectedName, selectedMonth, selectedYear); }
   }
 
   async function handleExportAll() {
@@ -373,6 +394,11 @@ export default function OvertimeForm() {
 
   const isSaveDisabled = !!errorStartEnd || !selectedName || !startTime || !endTime || workDescription.trim() === "" || saving;
 
+  const monthNames = [
+    "Enero","Febrero","Marzo","Abril","Mayo","Junio",
+    "Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"
+  ];
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-gray-100 py-1 flex flex-col justify-start sm:py-2" ref={formRef}>
       <Toast message={toast} onClose={() => setToast("")} />
@@ -407,7 +433,7 @@ export default function OvertimeForm() {
                   Registro de Horas Extras
                 </h1>
 
-                {/* ✅ Banner modo edición */}
+                {/* Banner modo edición */}
                 {editingId && (
                   <div className="flex items-center gap-2 bg-yellow-50 border border-yellow-400 text-yellow-800 rounded-lg px-4 py-3 mb-2">
                     <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -423,6 +449,7 @@ export default function OvertimeForm() {
                   </div>
                 )}
 
+                {/* Selector de técnico */}
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2 mt-6">Nombre del Técnico</label>
                   <select
@@ -435,6 +462,37 @@ export default function OvertimeForm() {
                     {technicians.map((tech) => <option key={tech} value={tech}>{tech}</option>)}
                   </select>
                 </div>
+
+                {/* ── NUEVO: Filtro por Mes y Año ─────────────────────────── */}
+                <div className="mb-4 flex gap-3">
+                  <div className="flex-1">
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Mes</label>
+                    <select
+                      className="shadow border rounded w-full py-2 px-3 text-gray-700"
+                      value={selectedMonth}
+                      onChange={(e) => setSelectedMonth(Number(e.target.value))}
+                      aria-label="Mes"
+                    >
+                      {monthNames.map((m, i) => (
+                        <option key={i + 1} value={i + 1}>{m}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-gray-700 text-sm font-bold mb-2">Año</label>
+                    <select
+                      className="shadow border rounded w-full py-2 px-3 text-gray-700"
+                      value={selectedYear}
+                      onChange={(e) => setSelectedYear(Number(e.target.value))}
+                      aria-label="Año"
+                    >
+                      {[2024, 2025, 2026, 2027].map((y) => (
+                        <option key={y} value={y}>{y}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                {/* ─────────────────────────────────────────────────────────── */}
 
                 <div className="mb-4">
                   <label className="block text-gray-700 text-sm font-bold mb-2">
@@ -514,7 +572,7 @@ export default function OvertimeForm() {
             {selectedName && (
               <div className="mt-10">
                 <h2 className="text-xl font-bold mb-2 text-center text-blue-800 bg-blue-50 py-2 rounded">
-                  Registros de {selectedName}
+                  {monthNames[selectedMonth - 1]} {selectedYear} — {selectedName}
                 </h2>
                 <p className="mb-4 text-center text-gray-700">
                   <span className="font-semibold">Total Horas Trabajadas:</span>{" "}
@@ -522,7 +580,11 @@ export default function OvertimeForm() {
                 </p>
                 {loading ? <p className="text-center">Cargando...</p> : (
                   <div className="space-y-4">
-                    {records.length === 0 && <div className="text-center text-gray-500">No hay registros.</div>}
+                    {records.length === 0 && (
+                      <div className="text-center text-gray-500">
+                        No hay registros para {monthNames[selectedMonth - 1]} {selectedYear}.
+                      </div>
+                    )}
                     {records.map((record, idx) => (
                       <div
                         key={record.id}
@@ -586,7 +648,7 @@ export default function OvertimeForm() {
                 Exportar Excel (Todo)
               </button>
 
-              {/* ✅ Zona de peligro separada visualmente */}
+              {/* Zona de peligro */}
               <div className="border border-red-200 rounded-xl p-4 mt-2 bg-red-50">
                 <p className="text-xs font-semibold text-red-500 uppercase tracking-wide mb-3 text-center">⚠ Zona de peligro</p>
                 <button
