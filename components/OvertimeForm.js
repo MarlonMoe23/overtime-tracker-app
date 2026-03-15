@@ -321,7 +321,7 @@ function buildAdminRows(records) {
       const midnight = new Date(start); midnight.setHours(24,0,0,0);
       const segEnd = end < midnight ? end : midnight;
       const pad = n => String(n).padStart(2,"0");
-      rows.push({ "Tecnico": r.name, "Dia del Mes": start.getDate(), "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`, "Hora Final": `${pad(segEnd.getHours())}:${pad(segEnd.getMinutes())}`, "Horas": Number(((segEnd-start)/3600000).toFixed(2)) });
+      rows.push({ "Tecnico": r.name, "Mes": monthNames[start.getMonth()], "Año": start.getFullYear(), "Dia del Mes": start.getDate(), "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`, "Hora Final": `${pad(segEnd.getHours())}:${pad(segEnd.getMinutes())}`, "Horas": Number(((segEnd-start)/3600000).toFixed(2)) });
       start = segEnd;
     }
   });
@@ -464,7 +464,7 @@ export default function OvertimeForm() {
     const sorted = [...data].sort((a,b) => a.name===b.name ? new Date(a.start_time)-new Date(b.start_time) : a.name.localeCompare(b.name));
     const ws1 = XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': (new Date(r.end_time)-new Date(r.start_time))/3600000 })), { cellDates: true });
     const ws2 = XLSX.utils.json_to_sheet(buildAdminRows(sorted));
-    ws2['!cols'] = [{wch:25},{wch:12},{wch:12},{wch:12},{wch:10}];
+    ws2['!cols'] = [{wch:25},{wch:12},{wch:8},{wch:12},{wch:12},{wch:12},{wch:10}];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
     XLSX.utils.book_append_sheet(wb, ws2, 'Formato Admin');
@@ -478,7 +478,7 @@ export default function OvertimeForm() {
     if (error) { showToast('Error: ' + error.message); return; }
     if (!data?.length) { showToast('No hay datos.'); return; }
     const ws = XLSX.utils.json_to_sheet(buildAdminRows(data));
-    ws['!cols'] = [{wch:25},{wch:12},{wch:12},{wch:12},{wch:10}];
+    ws['!cols'] = [{wch:25},{wch:12},{wch:8},{wch:12},{wch:12},{wch:12},{wch:10}];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Formato Admin');
     XLSX.writeFile(wb, `horas_extras_${selectedName.replace(/ /g,'_')}.xlsx`);
