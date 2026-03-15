@@ -10,7 +10,7 @@ if (typeof document !== 'undefined' && !document.getElementById('ot-fonts')) {
   const link = document.createElement("link");
   link.id = 'ot-fonts';
   link.rel = "stylesheet";
-  link.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap";
+  link.href = "https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&family=Oswald:wght@600;700&display=swap";
   document.head.appendChild(link);
 }
 
@@ -134,7 +134,8 @@ const CSS = `
     font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; margin-bottom: 2px;
   }
   .ot-total-pill strong {
-    font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; color: #fff;
+    font-family: 'Oswald', sans-serif; font-size: 22px; font-weight: 700; color: #fff;
+    letter-spacing: 0.05em;
   }
   .ot-filter-row { display: flex; gap: 10px; margin-bottom: 20px; }
   .ot-filter-row > * { flex: 1; }
@@ -150,8 +151,9 @@ const CSS = `
   .ot-record-dates { font-size: 13px; color: #8892aa; line-height: 1.8; }
   .ot-record-dates strong { color: #e8eaf0; font-weight: 500; }
   .ot-record-hours {
-    font-family: 'Syne', sans-serif; font-size: 22px;
-    font-weight: 800; color: #5b6aff; white-space: nowrap; text-align: right;
+    font-family: 'Oswald', sans-serif; font-size: 24px;
+    font-weight: 700; color: #5b6aff; white-space: nowrap; text-align: right;
+    letter-spacing: 0.05em;
   }
   .ot-record-hours span {
     display: block; font-size: 10px; font-weight: 600; color: #4a5268; margin-top: -2px;
