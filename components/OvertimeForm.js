@@ -316,16 +316,30 @@ function autoFitColumns(ws) {
   const range = XLSX.utils.decode_range(ws['!ref']);
   const colWidths = [];
   for (let C = range.s.c; C <= range.e.c; C++) {
-    let maxLen = 10;
+    let maxLen = 8;
     for (let R = range.s.r; R <= range.e.r; R++) {
       const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
       if (!cell || cell.v == null) continue;
-      const len = String(cell.v).length;
-      if (len > maxLen) maxLen = len;
+      // Para fechas usamos longitud del formato visual, no el número interno
+      const displayLen = cell.t === 'd' ? 18 : String(cell.v).length;
+      if (displayLen > maxLen) maxLen = displayLen;
     }
-    colWidths.push({ wch: maxLen + 2 });
+    colWidths.push({ wch: Math.min(maxLen + 2, 35) }); // tope de 35 para evitar columnas enormes
   }
   ws['!cols'] = colWidths;
+  return ws;
+}
+
+function applyDateTimeFormat(ws) {
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const cell = ws[XLSX.utils.encode_cell({ r: R, c: C })];
+      if (cell && cell.t === 'd') {
+        cell.z = 'dd/mm/yyyy hh:mm';
+      }
+    }
+  }
   return ws;
 }
 
@@ -494,7 +508,7 @@ export default function OvertimeForm() {
     if (error) { showToast('Error: ' + error.message); return; }
     if (!data?.length) { showToast('No hay datos.'); return; }
     const sorted = [...data].sort((a,b) => a.name===b.name ? new Date(a.start_time)-new Date(b.start_time) : a.name.localeCompare(b.name));
-    const ws1 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': (new Date(r.end_time)-new Date(r.start_time))/3600000 })), { cellDates: true })));
+    const ws1 = autoFitColumns(applyDateTimeFormat(centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': Math.round((new Date(r.end_time)-new Date(r.start_time))/3600000 * 100) / 100 })), { cellDates: true }))));
     const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted))));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
