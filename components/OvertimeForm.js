@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, forwardRef, useCallback } from "react";
 import { supabase } from '../lib/supabase';
-import * as XLSX from "xlsx";
+import * as XLSX from "xlsx-js-style";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { format } from "date-fns";
@@ -312,6 +312,21 @@ function calcHours(start, end) {
   return { hhmm: `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`, decimal: `${(totalMin/60).toFixed(1)}h` };
 }
 
+function centerWorksheet(ws) {
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  for (let R = range.s.r; R <= range.e.r; R++) {
+    for (let C = range.s.c; C <= range.e.c; C++) {
+      const addr = XLSX.utils.encode_cell({ r: R, c: C });
+      if (!ws[addr]) continue;
+      ws[addr].s = {
+        alignment: { horizontal: 'center', vertical: 'center' },
+        ...(R === 0 ? { font: { bold: true } } : {})
+      };
+    }
+  }
+  return ws;
+}
+
 function buildAdminRows(records) {
   const rows = [];
   records.forEach(r => {
@@ -462,8 +477,8 @@ export default function OvertimeForm() {
     if (error) { showToast('Error: ' + error.message); return; }
     if (!data?.length) { showToast('No hay datos.'); return; }
     const sorted = [...data].sort((a,b) => a.name===b.name ? new Date(a.start_time)-new Date(b.start_time) : a.name.localeCompare(b.name));
-    const ws1 = XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': (new Date(r.end_time)-new Date(r.start_time))/3600000 })), { cellDates: true });
-    const ws2 = XLSX.utils.json_to_sheet(buildAdminRows(sorted));
+    const ws1 = centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': (new Date(r.end_time)-new Date(r.start_time))/3600000 })), { cellDates: true }));
+    const ws2 = centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted)));
     ws2['!cols'] = [{wch:25},{wch:12},{wch:8},{wch:12},{wch:12},{wch:12},{wch:10}];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
@@ -477,7 +492,7 @@ export default function OvertimeForm() {
     const { data, error } = await supabase.from('overtime_records').select('*').eq('name', selectedName).order('start_time', { ascending: true });
     if (error) { showToast('Error: ' + error.message); return; }
     if (!data?.length) { showToast('No hay datos.'); return; }
-    const ws = XLSX.utils.json_to_sheet(buildAdminRows(data));
+    const ws = centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(data)));
     ws['!cols'] = [{wch:25},{wch:12},{wch:8},{wch:12},{wch:12},{wch:12},{wch:10}];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Formato Admin');
