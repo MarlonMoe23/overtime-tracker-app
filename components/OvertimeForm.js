@@ -553,29 +553,27 @@ export default function OvertimeForm() {
           </select>
         </div>
 
-        <div className="ot-row">
-          <div className="ot-field">
-            <label className="ot-label">Hora de Inicio</label>
-            <DatePicker
-              selected={startTime} onChange={setStartTime}
-              showTimeSelect timeFormat="HH:mm" timeIntervals={1}
-              dateFormat="dd/MM/yyyy HH:mm" maxDate={new Date()}
-              placeholderText="Fecha inicio"
-              customInput={<CustomInput ref={startInputRef} ariaLabel="Hora de Inicio" />}
-              popperPlacement="bottom" popperModifiers={popperModifiers}
-            />
-          </div>
-          <div className="ot-field">
-            <label className="ot-label">Hora de Fin</label>
-            <DatePicker
-              selected={endTime} onChange={setEndTime}
-              showTimeSelect timeFormat="HH:mm" timeIntervals={1}
-              dateFormat="dd/MM/yyyy HH:mm" maxDate={new Date()}
-              placeholderText="Fecha fin"
-              customInput={<CustomInput ariaLabel="Hora de Fin" />}
-              popperPlacement="bottom" popperModifiers={popperModifiers}
-            />
-          </div>
+        <div className="ot-field">
+          <label className="ot-label">Hora de Inicio</label>
+          <DatePicker
+            selected={startTime} onChange={setStartTime}
+            showTimeSelect timeFormat="HH:mm" timeIntervals={1}
+            dateFormat="dd/MM/yyyy HH:mm" maxDate={new Date()}
+            placeholderText="Fecha inicio"
+            customInput={<CustomInput ref={startInputRef} ariaLabel="Hora de Inicio" />}
+            popperPlacement="bottom" popperModifiers={popperModifiers}
+          />
+        </div>
+        <div className="ot-field">
+          <label className="ot-label">Hora de Fin</label>
+          <DatePicker
+            selected={endTime} onChange={setEndTime}
+            showTimeSelect timeFormat="HH:mm" timeIntervals={1}
+            dateFormat="dd/MM/yyyy HH:mm" maxDate={new Date()}
+            placeholderText="Fecha fin"
+            customInput={<CustomInput ariaLabel="Hora de Fin" />}
+            popperPlacement="bottom" popperModifiers={popperModifiers}
+          />
         </div>
         {errorStartEnd && <p className="ot-error-msg" style={{ marginTop: -10, marginBottom: 12 }}>{errorStartEnd}</p>}
 
