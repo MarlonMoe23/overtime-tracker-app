@@ -510,7 +510,6 @@ export default function OvertimeForm() {
     const sorted = [...data].sort((a,b) => a.name===b.name ? new Date(a.start_time)-new Date(b.start_time) : a.name.localeCompare(b.name));
     const ws1 = autoFitColumns(applyDateTimeFormat(centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': Math.round((new Date(r.end_time)-new Date(r.start_time))/3600000 * 100) / 100 })), { cellDates: true }), [3])));
     const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted))));
-    const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted))));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
     XLSX.utils.book_append_sheet(wb, ws2, 'Formato Admin');
