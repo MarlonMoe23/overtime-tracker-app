@@ -343,14 +343,14 @@ function applyDateTimeFormat(ws) {
   return ws;
 }
 
-function centerWorksheet(ws) {
+function centerWorksheet(ws, leftCols = []) {
   const range = XLSX.utils.decode_range(ws['!ref']);
   for (let R = range.s.r; R <= range.e.r; R++) {
     for (let C = range.s.c; C <= range.e.c; C++) {
       const addr = XLSX.utils.encode_cell({ r: R, c: C });
       if (!ws[addr]) continue;
       ws[addr].s = {
-        alignment: { horizontal: C === 3 ? 'left' : 'center', vertical: 'center' },
+        alignment: { horizontal: leftCols.includes(C) ? 'left' : 'center', vertical: 'center' },
         ...(R === 0 ? { font: { bold: true } } : {})
       };
     }
@@ -508,7 +508,8 @@ export default function OvertimeForm() {
     if (error) { showToast('Error: ' + error.message); return; }
     if (!data?.length) { showToast('No hay datos.'); return; }
     const sorted = [...data].sort((a,b) => a.name===b.name ? new Date(a.start_time)-new Date(b.start_time) : a.name.localeCompare(b.name));
-    const ws1 = autoFitColumns(applyDateTimeFormat(centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': Math.round((new Date(r.end_time)-new Date(r.start_time))/3600000 * 100) / 100 })), { cellDates: true }))));
+    const ws1 = autoFitColumns(applyDateTimeFormat(centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': Math.round((new Date(r.end_time)-new Date(r.start_time))/3600000 * 100) / 100 })), { cellDates: true }), [3])));
+    const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted))));
     const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted))));
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
