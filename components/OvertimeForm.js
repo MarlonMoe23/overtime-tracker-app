@@ -526,7 +526,8 @@ export default function OvertimeForm() {
     if (!data?.length) { showToast('No hay datos.'); return; }
     const sorted = [...data].sort((a,b) => a.name===b.name ? new Date(a.start_time)-new Date(b.start_time) : a.name.localeCompare(b.name));
     const ws1 = autoFitColumns(applyDateTimeFormat(centerWorksheet(XLSX.utils.json_to_sheet(sorted.map(r => ({ 'Técnico': r.name, 'Inicio': new Date(r.start_time), 'Fin': new Date(r.end_time), 'Descripción': r.work_description||'Sin descripción', 'Horas': Math.round((new Date(r.end_time)-new Date(r.start_time))/3600000 * 100) / 100 })), { cellDates: true }), [3])));
-    const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted))));
+   const ws2 = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(sorted)), [7]));
+
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws1, 'Horas Extras');
     XLSX.utils.book_append_sheet(wb, ws2, 'Formato Admin');
@@ -539,8 +540,8 @@ export default function OvertimeForm() {
     const { data, error } = await supabase.from('overtime_records').select('*').eq('name', selectedName).order('start_time', { ascending: true });
     if (error) { showToast('Error: ' + error.message); return; }
     if (!data?.length) { showToast('No hay datos.'); return; }
-    const ws = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(data))));
-    const wb = XLSX.utils.book_new();
+    const ws = autoFitColumns(centerWorksheet(XLSX.utils.json_to_sheet(buildAdminRows(data)), [7]));
+const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, 'Formato Admin');
     XLSX.writeFile(wb, `horas_extras_${selectedName.replace(/ /g,'_')}.xlsx`);
     showToast(`Exportado: ${selectedName} 📁`);
