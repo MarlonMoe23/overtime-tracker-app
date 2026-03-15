@@ -350,7 +350,7 @@ function centerWorksheet(ws) {
       const addr = XLSX.utils.encode_cell({ r: R, c: C });
       if (!ws[addr]) continue;
       ws[addr].s = {
-        alignment: { horizontal: 'center', vertical: 'center' },
+        alignment: { horizontal: C === 3 ? 'left' : 'center', vertical: 'center' },
         ...(R === 0 ? { font: { bold: true } } : {})
       };
     }
