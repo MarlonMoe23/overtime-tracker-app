@@ -363,16 +363,33 @@ function buildAdminRows(records) {
   records.forEach(r => {
     let start = new Date(r.start_time);
     const end = new Date(r.end_time);
+
     while (start < end) {
-      const midnight = new Date(start); midnight.setHours(24,0,0,0);
+      const midnight = new Date(start);
+      midnight.setHours(24,0,0,0);
+
       const segEnd = end < midnight ? end : midnight;
+
       const pad = n => String(n).padStart(2,"0");
-      rows.push({ "Tecnico": r.name, "Mes": monthNames[start.getMonth()], "Año": start.getFullYear(), "Dia del Mes": start.getDate(), "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`, "Hora Final": `${pad(segEnd.getHours())}:${pad(segEnd.getMinutes())}`, "Horas": Number(((segEnd-start)/3600000).toFixed(2)) });
+
+      rows.push({
+        "Tecnico": r.name,
+        "Mes": monthNames[start.getMonth()],
+        "Año": start.getFullYear(),
+        "Dia del Mes": start.getDate(),
+        "Hora Inicio": `${pad(start.getHours())}:${pad(start.getMinutes())}`,
+        "Hora Final": `${pad(segEnd.getHours())}:${pad(segEnd.getMinutes())}`,
+        "Horas": Number(((segEnd-start)/3600000).toFixed(2)),
+        "Descripción": r.work_description || ""
+      });
+
       start = segEnd;
     }
   });
+
   return rows;
 }
+
 
 // ─── CustomInput DatePicker ───────────────────────────────────────────────────
 const CustomInput = forwardRef(function CustomInput({ value, onClick, placeholder, ariaLabel }, ref) {
